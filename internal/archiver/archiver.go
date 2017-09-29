@@ -134,6 +134,8 @@ func (arch *Archiver) reloadFileIfChanged(node *restic.Node, file fs.File) (*res
 		return nil, errors.Wrap(err, "restic.Stat")
 	}
 
+	node.AccessTime = node.ModTime
+
 	if fi.ModTime().Equal(node.ModTime) {
 		return node, nil
 	}
@@ -145,6 +147,8 @@ func (arch *Archiver) reloadFileIfChanged(node *restic.Node, file fs.File) (*res
 		debug.Log("restic.NodeFromFileInfo returned error for %v: %v", node.Path, err)
 		arch.Warn(node.Path, fi, err)
 	}
+
+	node.AccessTime = node.ModTime
 
 	return node, nil
 }
@@ -282,6 +286,8 @@ func (arch *Archiver) fileWorker(ctx context.Context, wg *sync.WaitGroup, p *res
 				arch.Warn(e.Fullpath(), e.Info(), err)
 			}
 
+			node.AccessTime = node.ModTime
+
 			// try to use old node, if present
 			if e.Node != nil {
 				debug.Log("   %v use old data", e.Path())
@@ -410,6 +416,7 @@ func (arch *Archiver) dirWorker(ctx context.Context, wg *sync.WaitGroup, p *rest
 					arch.Warn(dir.Path(), dir.Info(), err)
 				}
 				node = n
+				node.AccessTime = node.ModTime
 			}
 
 			if err := dir.Error(); err != nil {
